@@ -16,7 +16,7 @@ public class PlayerControls : MonoBehaviour
     void Update()
     { 
 
-        if (this._character.health == 0 || MainGame.Instance.gamePaused) return;
+        if (this._character.health == 0 || MainGame.Instance.gamePaused || !MainGame.Instance.gameActive) return;
         
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");

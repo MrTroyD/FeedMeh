@@ -22,6 +22,7 @@ public class BaseAI : MonoBehaviour
     MyBehaviour _currentBehaviour = MyBehaviour.Idle;
 
     Vector3 _destination;
+    float _destinationAngle;
 
     [SerializeField]Character _character;
     
@@ -43,15 +44,14 @@ public class BaseAI : MonoBehaviour
         switch (this._currentBehaviour)
         {
             case MyBehaviour.Turning:
-                this.transform.rotation = Quaternion.Euler(0, this.transform.rotation.y, 0);
-                var lookDestination = Quaternion.LookRotation(this._destination, transform.up);
-                this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, lookDestination, 15f);
+            print (this._destinationAngle);
+                this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, Quaternion.Euler(0, this._destinationAngle, 0), 15f);
                 break;
 
             case MyBehaviour.Walking:
                 // float angle = Mathf.Atan2(_destination.z, _destination.x);
-                this._character.horizontal = this.transform.forward.x;//Mathf.Cos(this.transform.rotation.y * Mathf.Deg2Rad);//Mathf.Clamp(this._destination.x - this.transform.position.x , -1, 1);
-                this._character.vertical = this.transform.forward.z; Mathf.Sin(this.transform.rotation.y * Mathf.Deg2Rad);
+                this._character.horizontal = this.transform.forward.x;
+                this._character.vertical = this.transform.forward.z;
                 break;
             
             default:
@@ -72,8 +72,8 @@ public class BaseAI : MonoBehaviour
                     this._currentBehaviour = MyBehaviour.Ponder;
                     this._actionTimer = this._ponderTimer;
                     
-                    float angle = Random.Range(0, 360) * Mathf.Deg2Rad;
-                    this._destination = new Vector3(Mathf.Cos(angle) * this._walkingTimer, 0, Mathf.Sin(angle) * this._walkingTimer);
+
+                    this._destinationAngle = Random.Range(0, 360);
                     break;
 
                 case MyBehaviour.Ponder:

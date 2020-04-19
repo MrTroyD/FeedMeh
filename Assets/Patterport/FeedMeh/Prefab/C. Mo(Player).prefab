@@ -179,6 +179,7 @@ MonoBehaviour:
   _maxSpeed: 5
   _attackDamage: 1
   _rb: {fileID: 9120089891627362111}
+  _speechBubble: {fileID: 0}
   _triggerBox: {fileID: 9120089892211935194}
 --- !u!114 &9120089891627362108
 MonoBehaviour:

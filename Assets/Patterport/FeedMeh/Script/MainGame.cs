@@ -27,8 +27,11 @@ public class MainGame : MonoBehaviour
     GameObject _plantObject;
     GameObject _playerObject;
 
+    [SerializeField]SpeechManager _speechMananger;
+
     int _score;
     float _scoreTimer;
+    float _gameTime;
     [SerializeField]FoodSpawner _foodSpawner;
 
     int _level = 1;
@@ -48,6 +51,11 @@ public class MainGame : MonoBehaviour
         get {return this._level;}
     }
 
+    public float gameTime
+    {
+        get {return this._gameTime;}
+    }
+
     public bool gameActive
     {
         get {return this._gameActive;}
@@ -63,6 +71,15 @@ public class MainGame : MonoBehaviour
         get {return this._score;}
     }
 
+    public GameObject playerObject
+    {
+        get {return this._playerObject;}
+    }
+
+    public SpeechManager speechManager
+    {
+        get {return this._speechMananger;}
+    }
 
     // Start is called before the first frame update
     void Awake()
@@ -92,11 +109,19 @@ public class MainGame : MonoBehaviour
     {
         if (!this.gameActive || this.gamePaused) return;
         this._scoreTimer += Time.deltaTime;
+        this._gameTime += Time.deltaTime;
+
         if(this._scoreTimer > 1)
         {
             this._scoreTimer -= 1;
             this._score += 250 * this._level;
             this._gameUI.UpdateScore();
+        }
+
+        //Debug
+        if (Input.GetKeyUp(KeyCode.Q))
+        {
+            this._speechMananger.OnSpeech(this._playerObject.transform, "*ack*", 4);
         }
     }
 
@@ -112,6 +137,7 @@ public class MainGame : MonoBehaviour
     void SetupGame()
     {
         this._scoreTimer = 0;
+        this._gameTime = 0;
         this._score = 0;
         this._level = 1;
         this._gameUI.OnSetLevel();

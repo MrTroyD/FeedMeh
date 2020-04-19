@@ -153,9 +153,8 @@ public class Character : MonoBehaviour
         print ("Attacking!");
         if (character._health == 0)
         {
-            print ("Dead");
-            character.GetComponentInParent<PossibleFood>().lifeStatus = PossibleFood.FoodStatus.Meat;
-            character.transform.localRotation = Quaternion.Euler(90, character.transform.localRotation.y, character.transform.localRotation.z);
+            character.OnDeath();
+           character.transform.localRotation = Quaternion.Euler(90, character.transform.localRotation.y, character.transform.localRotation.z);
             // character.transform.position = new Vector3(character.transform.position.x, -0.25f, character.transform.position.z);
         }
         else if (character._health < 0)
@@ -172,6 +171,13 @@ public class Character : MonoBehaviour
                 if (pb) pb.OnEat(character.GetComponentInParent<PossibleFood>());
             }
         }
+    }
+
+    void OnDeath()
+    {
+        this.GetComponentInParent<PossibleFood>().lifeStatus = PossibleFood.FoodStatus.Meat;
+                MainGame.Instance.speechManager.OnSpeech(this.transform, "*ack*", 2);
+        
     }
 
     void OnCollisionEnter(Collision other) {
