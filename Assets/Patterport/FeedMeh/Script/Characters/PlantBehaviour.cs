@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class PlantBehaviour : MonoBehaviour
 {
+    [SerializeField]float _hungerPerSecond = .5f;
+    [SerializeField]Transform _healthBar;
+    [SerializeField]Character _character;
+
+    [SerializeField]Animator _animator;
+
     public enum PlantAttackMode
     {
         Idle,
@@ -14,9 +20,13 @@ public class PlantBehaviour : MonoBehaviour
     [SerializeField]PlantAttackMode _currentBehaviour;
 
     [SerializeField]Transform _mouth;
-    List<FoodInArea> _foodInArea = new List<FoodInArea>();
+    [SerializeField]List<FoodInArea> _foodInArea = new List<FoodInArea>();
 
-    [SerializeField]float _hungerGauge = 5f;
+    [SerializeField]float _hungerGauge = 10f;
+    float _maxHungerArea = 5f;
+    float _diffLevel = 1;
+
+    [SerializeField]float _tasteForMeat = 0;
 
     Vector3 _startingLocation;
 
@@ -26,6 +36,8 @@ public class PlantBehaviour : MonoBehaviour
     float _attackSpeed = .25f;
 
     float _attackTime = 0f;
+
+    public float healthBarPercentage;
 
     // Start is called before the first frame update
     void Start()
@@ -40,12 +52,22 @@ public class PlantBehaviour : MonoBehaviour
     /// <param name="other">The other Collider involved in this collision.</param>
     void OnTriggerEnter(Collider other)
     {
-        print ("Something is in my food area!");
+        print ("Something is in my food area!"+other.name);
         PossibleFood pf = other.GetComponentInParent<PossibleFood>();
         if (pf && pf.lifeStatus != PossibleFood.FoodStatus.Inedible)
         {
             this._foodInArea.Add(new FoodInArea(pf));
+
+            if (this._foodInArea.Count == 1)
+            {
+                this._animator.Play("FoodIndicator");
+            }
         }
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+
     }
 
     void OnTriggerExit(Collider other) {
@@ -64,17 +86,66 @@ public class PlantBehaviour : MonoBehaviour
                     continue;
                 }
             }
-        }        
+        }  
+
+        if (this._foodInArea.Count < 1)
+        {
+            this._animator.Play("FoodRemove");
+        }      
     }
 
     public void OnEat(PossibleFood possibleFood)
     {
+        this._hungerGauge += possibleFood.nurishValue;
+
+        if (this._hungerGauge > 55) 
+        {
+            print ("Level up!");
+            MainGame.Instance.OnLevelUp();
+            this._hungerPerSecond = .5f + (MainGame.Instance.level * .2f);
+        }
+
+        this._hungerGauge = Mathf.Clamp(this._hungerGauge, 0, 52);
+        print ("EAT");
+        if (possibleFood.lifeStatus == PossibleFood.FoodStatus.Meat || possibleFood.lifeStatus == PossibleFood.FoodStatus.Alive)
+        {
+            this._tasteForMeat += .05f;
+
+            if (possibleFood.lifeStatus == PossibleFood.FoodStatus.Alive)
+            {
+                this._tasteForMeat += .05f;
+            }            
+        }
+
+        if (this._tasteForMeat > 1) this._tasteForMeat = 1;
+
+        if (possibleFood.gameObject.tag == "Player")
+        {
+            MainGame.Instance.OnKillPlayer();
+        }
+
+        MainGame.Instance.OnFoodConsumed(possibleFood.gameObject);
+
         Destroy(possibleFood.gameObject, .01f);
+
     }
 
     // Update is called once per frame
     void Update()
     {
+        this._hungerGauge -= Time.deltaTime * this._hungerPerSecond;
+        if (this._hungerGauge < 0) 
+        {
+            print ("dead?");
+            this._hungerGauge = 0;
+            this.enabled = false;
+
+            MainGame.Instance.GameOver();
+        }
+
+        this.healthBarPercentage = Mathf.Clamp(this._hungerGauge/(this._maxHungerArea * 10f), 0.001f, 1f);
+        
+
         for (int i = this._foodInArea.Count - 1; i >= 0; i--)
         {
             FoodInArea fia = this._foodInArea[i];
@@ -84,10 +155,10 @@ public class PlantBehaviour : MonoBehaviour
                 continue;   
             } 
 
-            fia.timeInArea += Time.deltaTime;
+            fia.timeInArea += (fia.food.lifeStatus == PossibleFood.FoodStatus.Veggies) ?  Time.deltaTime * (1-this._tasteForMeat) : Time.deltaTime;
             if (this._currentBehaviour != PlantAttackMode.Idle) continue;
 
-            if (fia.timeInArea > this._hungerGauge)
+            if (fia.timeInArea > this._hungerGauge || fia.timeInArea > this._maxHungerArea)
             {
                 if (fia.food == null) continue;
                 //TODO: Attack charge up
@@ -118,8 +189,9 @@ public class PlantBehaviour : MonoBehaviour
                         PossibleFood pf = hitColliders[n].gameObject.GetComponentInParent<PossibleFood>();
                         if (pf == null) continue;
 
-                        if (pf.lifeStatus == PossibleFood.FoodStatus.Veggies)
+                        if (pf.lifeStatus == PossibleFood.FoodStatus.Veggies || pf.lifeStatus == PossibleFood.FoodStatus.Meat)
                             OnEat(pf);
+
 
                         print ("Something is in here named "+hitColliders[n].name);
 
@@ -142,6 +214,7 @@ public class PlantBehaviour : MonoBehaviour
     }
 }
 
+[System.Serializable]
 class FoodInArea
 {
     public PossibleFood food;

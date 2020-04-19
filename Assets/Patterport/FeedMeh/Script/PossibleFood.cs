@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PossibleFood : MonoBehaviour
 {
+    public int nurishValue;
+
     public enum FoodStatus
     {
         Inedible,

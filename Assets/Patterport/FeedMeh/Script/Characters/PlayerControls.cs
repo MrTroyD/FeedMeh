@@ -15,6 +15,9 @@ public class PlayerControls : MonoBehaviour
     // Update is called once per frame
     void Update()
     { 
+
+        if (this._character.health == 0 || MainGame.Instance.gamePaused) return;
+        
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
                
