@@ -17,7 +17,10 @@ public class GameUI : MonoBehaviour
     [SerializeField]Animator _animator;
 
     [SerializeField]TMP_Text _toolTip;
-    [SerializeField]float _tipTimer;
+
+    [SerializeField]GameObject _gameOver;
+
+    float _tipTimer;
 
     void Update()
     {
@@ -68,6 +71,16 @@ public class GameUI : MonoBehaviour
     public void ShowTip(string message)
     {
         ShowTip(message, 4);
+    }
+
+    public void ShowGameOver()
+    {
+        this._gameOver.SetActive(true);
+    }
+
+    public void HideGameOver()
+    {
+        this._gameOver.SetActive(false);
     }
 
     public void ShowTip(string message, float duration)

@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Patterport/FeedMeh/Scenes/MainScene.unity
+    guid: 31bab96c61aaa66409faffc25941ad42
   m_configObjects: {}

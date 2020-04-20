@@ -90,7 +90,8 @@ public class MainGame : MonoBehaviour
             return;
         }
 
-        _instance = this;
+        _instance = this;    
+        this._gameUI.HideGameOver();
     }
 
     private void OnEnable() {
@@ -177,6 +178,8 @@ public class MainGame : MonoBehaviour
         print ("Game Over");
         this._gameActive = false;
 
+        this._gameUI.ShowGameOver();
+
         Invoke("ShowTitle", 3f);
     }
 
@@ -190,6 +193,7 @@ public class MainGame : MonoBehaviour
 
     void ShowTitle()
     {        
+        this._gameUI.HideGameOver();
         this._titleScreen.gameObject.SetActive(true);
     }
 

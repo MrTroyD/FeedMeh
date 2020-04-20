@@ -100,6 +100,10 @@ public class Character : MonoBehaviour
                         rb.useGravity = false;
                         
                     }
+
+                    if (this._pickupIntructions < 3)
+                     MainGame.Instance.ShowTip("Press Spacebar to drop", 4);
+       
                     break;
                 
                 case PossibleFood.FoodStatus.Meat:
