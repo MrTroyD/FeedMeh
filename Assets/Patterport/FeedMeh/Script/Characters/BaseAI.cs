@@ -44,7 +44,6 @@ public class BaseAI : MonoBehaviour
         switch (this._currentBehaviour)
         {
             case MyBehaviour.Turning:
-            print (this._destinationAngle);
                 this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, Quaternion.Euler(0, this._destinationAngle, 0), 15f);
                 break;
 

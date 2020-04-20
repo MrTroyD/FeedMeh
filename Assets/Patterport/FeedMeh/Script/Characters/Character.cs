@@ -8,6 +8,7 @@ public class Character : MonoBehaviour
     float _vertical;
 
     bool _itemInHand;
+    int _pickupIntructions = 0;
 
     [SerializeField]int _health = 1;
     [SerializeField]float _velocity;
@@ -50,6 +51,7 @@ public class Character : MonoBehaviour
     void Start()
     {
         if (this._triggerBox) this._triggerBox.isTrigger = true;
+        this._pickupIntructions = 0;
     }
 
     void OnTriggerEnter(Collider other)
@@ -57,12 +59,18 @@ public class Character : MonoBehaviour
         if (this._triggerBox == null || this._itemInHand || other.gameObject.layer == LayerMask.GetMask("Landscape")) return;
         // if (other.gameObject.layer == LayerMask.NameToLayer("Plant") || this.gameObject.layer == LayerMask.NameToLayer("Plant")) return;
        this._interactable = other.gameObject;
+
+        if (this._pickupIntructions < 3)
+            MainGame.Instance.ShowTip("Press Spacebar to pickup", 4);
+                    
     }
 
     public void OnInteract()
     {
         if (this._itemInHand && this._interactable == null) this._itemInHand = false;
         if (!this._interactable) return;
+        
+        this._pickupIntructions++;
 
         if (!this._itemInHand)
         {
@@ -111,7 +119,22 @@ public class Character : MonoBehaviour
                     break;
 
                 case PossibleFood.FoodStatus.Alive:
-                    print ("Not while it's still moving");
+
+                    string message ="Not while it lives";
+
+                    switch (Random.Range(0, 3))
+                    {
+                        case 0:
+                            message = "First I must murder it.";
+                            break;
+                        case 1:
+                            message = "I must make it stop moving.";
+                            break;
+                    }
+
+                    MainGame.Instance.speechManager.OnSpeech(this.transform, message, 2);
+                    MainGame.Instance.ShowTip("Press ALT to murder...", 4);
+                    pf.GetComponentInParent<Character>().Invoke("Confused", 2);
                     break;
             }
         }
@@ -173,8 +196,38 @@ public class Character : MonoBehaviour
         }
     }
 
+    void Confused()
+    {
+        CancelInvoke("Confused");
+        int rn = Random.Range(0, 5);
+
+        string output = "???";
+        switch (rn)
+        {
+            case 0:
+                output = "What!?";
+                break;
+            case 1:
+                output = "Huh?";
+                break;
+            case 2:
+                output = "What now?";
+                break;
+            case 3:
+                output = "Excuse me?";
+                break;
+            default:
+                output = "????";
+                break;
+        }
+        
+        MainGame.Instance.speechManager.OnSpeech(this.transform, output, 2);
+        
+    }
+
     void OnDeath()
     {
+        CancelInvoke("Confused");
         this.GetComponentInParent<PossibleFood>().lifeStatus = PossibleFood.FoodStatus.Meat;
                 MainGame.Instance.speechManager.OnSpeech(this.transform, "*ack*", 2);
         
@@ -200,7 +253,7 @@ public class Character : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (this._health <= 0 || MainGame.Instance.gamePaused)
+        if (this._health <= 0 || !MainGame.Instance.gameActive || MainGame.Instance.gamePaused)
         {
             return;
         }
@@ -223,6 +276,11 @@ public class Character : MonoBehaviour
         } else 
         {
             this._velocity = 0;
+        }
+
+        if (this.transform.position.y < -.99f)
+        {
+            this.transform.position += Vector3.up * 2;
         }
     }
 }

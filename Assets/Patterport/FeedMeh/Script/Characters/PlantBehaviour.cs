@@ -1,14 +1,14 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlantBehaviour : MonoBehaviour
 {
     [SerializeField]float _hungerPerSecond = .5f;
-    [SerializeField]Transform _healthBar;
     [SerializeField]Character _character;
 
     [SerializeField]Animator _animator;
+    [SerializeField]Animator _plantAnimator;
 
     public enum PlantAttackMode
     {
@@ -47,12 +47,21 @@ public class PlantBehaviour : MonoBehaviour
     }
 
     /// <summary>
+    /// OnCollisionEnter is called when this collider/rigidbody has begun
+    /// touching another rigidbody/collider.
+    /// </summary>
+    /// <param name="other">The Collision data associated with this collision.</param>
+    void OnCollisionEnter(Collision other)
+    {
+        print ("Collision");
+    }
+
+    /// <summary>
     /// OnTriggerEnter is called when the Collider other enters the trigger.
     /// </summary>
     /// <param name="other">The other Collider involved in this collision.</param>
     void OnTriggerEnter(Collider other)
     {
-        print ("Something is in my food area!"+other.name);
         PossibleFood pf = other.GetComponentInParent<PossibleFood>();
         if (pf && pf.lifeStatus != PossibleFood.FoodStatus.Inedible)
         {
@@ -61,6 +70,8 @@ public class PlantBehaviour : MonoBehaviour
             if (this._foodInArea.Count == 1)
             {
                 this._animator.Play("FoodIndicator");
+                this._mouth.LookAt(pf.transform);
+                this._plantAnimator.Play("Idle");
             }
         }
     }
@@ -72,7 +83,6 @@ public class PlantBehaviour : MonoBehaviour
 
     void OnTriggerExit(Collider other) {
         PossibleFood pf = other.GetComponentInParent<PossibleFood>();
-        print ("Something left my food area!"+this.name);
         if (pf)
         {
             FoodInArea fia;
@@ -81,7 +91,6 @@ public class PlantBehaviour : MonoBehaviour
                 fia = this._foodInArea[i];
                 if (pf == fia.food)
                 {
-                    print ("Removing that "+pf.name);
                     this._foodInArea.RemoveAt(i);
                     continue;
                 }
@@ -128,11 +137,18 @@ public class PlantBehaviour : MonoBehaviour
 
         Destroy(possibleFood.gameObject, .01f);
 
+        if (this._foodInArea.Count < 2)
+        {
+            this._animator.Play("FoodRemove");
+        }  
+
     }
 
     // Update is called once per frame
     void Update()
     {
+        //If the player is within Range look at the player
+
         this._hungerGauge -= Time.deltaTime * this._hungerPerSecond;
         if (this._hungerGauge < 0) 
         {
@@ -164,6 +180,7 @@ public class PlantBehaviour : MonoBehaviour
                 //TODO: Attack charge up
                 this._currentBehaviour = PlantAttackMode.Attacking;
 
+                this._plantAnimator.Play("Bite");
                 this._attackPoint = fia.food.transform.position;
                 this._attackTime = 0;
             }
@@ -173,7 +190,7 @@ public class PlantBehaviour : MonoBehaviour
         {
             this._attackTime += Time.deltaTime;
             this._mouth.transform.position = Vector3.Lerp(this._startingLocation, this._attackPoint, this._attackTime/this._attackSpeed);
-
+            this._mouth.LookAt(this._attackPoint);
             if (this._attackTime > this._attackSpeed)
             {
                 this._attackTime = 0;
@@ -193,8 +210,7 @@ public class PlantBehaviour : MonoBehaviour
                             OnEat(pf);
 
 
-                        print ("Something is in here named "+hitColliders[n].name);
-
+                
                      }
                  }
             }
@@ -211,8 +227,51 @@ public class PlantBehaviour : MonoBehaviour
                 this._currentBehaviour = PlantAttackMode.Idle;
             }
         }
+
+        
+
+        switch (this._currentBehaviour)
+        {
+            case PlantAttackMode.Idle:
+                OnIdling();
+                break;
+        }
+
     }
+    void OnIdling()
+    {   
+        if (this._foodInArea.Count < 1)
+        {
+           // print (this._mouth.transform.rotation.y);
+            //Slowly look up again if you're not hunting/biting
+            this._mouth.transform.localRotation = Quaternion.RotateTowards(this._mouth.transform.transform.localRotation, Quaternion.Euler(15, this._mouth.transform.transform.localEulerAngles.y, 0), 1);
+        }
+        else
+        {
+            //Check what will be eaten next
+            int minIndex = -1;
+            float minTime = -1;
+
+            for (int i = 0; i < this._foodInArea.Count; i++)
+            {
+                if (this._foodInArea[i].timeInArea > minTime)
+                {
+                    minTime = this._foodInArea[i].timeInArea;
+                    minIndex = i;
+                }
+            }
+
+            if (minIndex != -1) //It should never
+            {
+                this._mouth.LookAt(this._foodInArea[minIndex].food.transform);
+            }
+        }
+
+
+    }
+
 }
+
 
 [System.Serializable]
 class FoodInArea

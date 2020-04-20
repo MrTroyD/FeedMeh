@@ -134,6 +134,11 @@ public class MainGame : MonoBehaviour
         SetupGame();
     }
 
+    public void ShowTip(string message, float duration)
+    {
+        this._gameUI.ShowTip(message, duration);
+    }
+
     void SetupGame()
     {
         this._scoreTimer = 0;

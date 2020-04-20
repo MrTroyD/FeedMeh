@@ -27,5 +27,10 @@ public class PlayerControls : MonoBehaviour
 
         if (Input.GetButtonUp("Pickup")) this._character.OnInteract();
         if (Input.GetButtonUp("Attack")) this._character.OnKillObject();
+
+        //Pressing Control should attack as well. Too lazy to fix
+        if (Input.GetKeyUp(KeyCode.LeftControl)) this._character.OnKillObject();
+        if (Input.GetKeyUp(KeyCode.RightControl)) this._character.OnKillObject();
+        
     }
 }
