@@ -47,13 +47,18 @@ public class GameUI : MonoBehaviour
         this._plant = plant;
     }
 
-    public void OnSetLevel()
+
+    public void OnSetupLevel()
+    {
+        this._animator.Play("UI_StartGame");
+        ShowTip("Press Arrows to move");
+    }
+
+    public void OnUpdateUI()
     {
         float level = MainGame.Instance.level;
         this._levelDisplay.text = level > 1 ? "x"+level : "";
-        this._animator.Play("UI_StartGame");
 
-        ShowTip("Press Arrows to move");
     }
 
     public void UpdateScore()

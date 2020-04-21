@@ -137,7 +137,7 @@ public class Character : MonoBehaviour
                     }
 
                     MainGame.Instance.speechManager.OnSpeech(this.transform, message, 2);
-                    MainGame.Instance.ShowTip("Press ALT to murder...", 4);
+                    MainGame.Instance.ShowTip("Press CTRL to murder...", 4);
                     pf.GetComponentInParent<Character>().Invoke("Confused", 2);
                     break;
             }

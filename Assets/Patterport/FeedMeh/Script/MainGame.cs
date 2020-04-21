@@ -120,9 +120,18 @@ public class MainGame : MonoBehaviour
         }
 
         //Debug
-        if (Input.GetKeyUp(KeyCode.Q))
+        if (Input.GetKeyUp(KeyCode.Escape))
         {
-            this._speechMananger.OnSpeech(this._playerObject.transform, "*ack*", 4);
+           if (MainGame.Instance.gameActive)
+           {
+               MainGame.Instance.GameOver();
+           }           
+           else
+           {
+               #if UNITY_STANDALONE
+               Application.Quit();
+               #endif
+           }
         }
     }
 
@@ -146,7 +155,8 @@ public class MainGame : MonoBehaviour
         this._gameTime = 0;
         this._score = 0;
         this._level = 1;
-        this._gameUI.OnSetLevel();
+        this._gameUI.OnUpdateUI();
+        this._gameUI.OnSetupLevel();
         this._gameUI.UpdateScore();
 
         this._gameActive = true;
@@ -187,7 +197,7 @@ public class MainGame : MonoBehaviour
     {
         print ("Level Up!");
         this._level++;
-        this._gameUI.OnSetLevel();
+        this._gameUI.OnUpdateUI();
     }
 
 
@@ -246,6 +256,6 @@ public class MainGame : MonoBehaviour
 
         
         this._level = 1;
-        this._gameUI.OnSetLevel();
+        this._gameUI.OnUpdateUI();
     }
 }
