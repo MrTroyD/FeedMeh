@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class PlantBehaviour : MonoBehaviour
 {
+
+    [SerializeField]SoundPlayer _soundPlayer;
+    [SerializeField]AudioSource _soundTrack;
     [SerializeField]float _hungerPerSecond = .5f;
     [SerializeField]Character _character;
 
@@ -25,12 +28,14 @@ public class PlantBehaviour : MonoBehaviour
     [SerializeField]float _hungerGauge = 10f;
     float _maxHungerArea = 5f;
     float _diffLevel = 1;
+    float _diffIncreaseTimer = 30f;
 
     [SerializeField]float _tasteForMeat = 0;
 
     Vector3 _startingLocation;
 
     bool _attackReady = true;
+    bool _sadSoundReady = true;
 
     Vector3 _attackPoint;
     float _attackSpeed = .25f;
@@ -44,6 +49,9 @@ public class PlantBehaviour : MonoBehaviour
     {
         this._startingLocation = this._mouth.transform.position;
         this._currentBehaviour = PlantAttackMode.Idle;
+        this._diffIncreaseTimer = 30;
+
+        MainGame.Instance.soundManager.OnAddAudioSource(this._soundTrack);
     }
 
     /// <summary>
@@ -53,7 +61,6 @@ public class PlantBehaviour : MonoBehaviour
     /// <param name="other">The Collision data associated with this collision.</param>
     void OnCollisionEnter(Collision other)
     {
-        print ("Collision");
     }
 
     /// <summary>
@@ -69,6 +76,7 @@ public class PlantBehaviour : MonoBehaviour
 
             if (this._foodInArea.Count == 1)
             {
+                this._soundPlayer.PlaySound("Squeek");
                 this._animator.Play("FoodIndicator");
                 this._mouth.LookAt(pf.transform);
                 this._plantAnimator.Play("Idle");
@@ -107,15 +115,16 @@ public class PlantBehaviour : MonoBehaviour
     {
         this._hungerGauge += possibleFood.nurishValue;
 
+
         if (this._hungerGauge > 55) 
         {
-            print ("Level up!");
+            this._diffIncreaseTimer = 30;
             MainGame.Instance.OnLevelUp();
             this._hungerPerSecond = .5f + (MainGame.Instance.level * .2f);
+            this._soundPlayer.PlaySound("Sing");
         }
 
         this._hungerGauge = Mathf.Clamp(this._hungerGauge, 0, 52);
-        print ("EAT");
         if (possibleFood.lifeStatus == PossibleFood.FoodStatus.Meat || possibleFood.lifeStatus == PossibleFood.FoodStatus.Alive)
         {
             this._tasteForMeat += .05f;
@@ -123,13 +132,22 @@ public class PlantBehaviour : MonoBehaviour
             if (possibleFood.lifeStatus == PossibleFood.FoodStatus.Alive)
             {
                 this._tasteForMeat += .05f;
-            }            
+            }   
+
+            this._soundPlayer.PlaySound("CrunchOne");
+        }
+        else
+        {            
+            this._soundPlayer.PlaySound("CrunchTwo");
+            this._tasteForMeat -= .01f;
+            if (this._tasteForMeat < 0) this._tasteForMeat = 0;
         }
 
         if (this._tasteForMeat > 1) this._tasteForMeat = 1;
 
         if (possibleFood.gameObject.tag == "Player")
         {
+            this._soundTrack.Stop();
             MainGame.Instance.OnKillPlayer();
         }
 
@@ -147,20 +165,38 @@ public class PlantBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //If the player is within Range look at the player
+        if (!MainGame.Instance.gameActive) return;
 
-        this._hungerGauge -= Time.deltaTime * this._hungerPerSecond;
+        //If the player is within Range look at the player
+        this._diffIncreaseTimer -= MainGame.Instance.deltaTime;
+        this._hungerGauge -= MainGame.Instance.deltaTime * this._hungerPerSecond;
+        if (this._sadSoundReady && this._hungerGauge < 2)
+        {
+            this._sadSoundReady = false;
+            this._soundPlayer.PlaySound("Dying");
+        }
+
+        if (this._hungerGauge > 30)
+        {
+            this._sadSoundReady = true;
+        }
+
         if (this._hungerGauge < 0) 
         {
-            print ("dead?");
             this._hungerGauge = 0;
             this.enabled = false;
 
+            this._soundTrack.Stop();
             MainGame.Instance.GameOver();
         }
 
         this.healthBarPercentage = Mathf.Clamp(this._hungerGauge/(this._maxHungerArea * 10f), 0.001f, 1f);
         
+        if (this._diffIncreaseTimer < 0)
+        {
+            this._diffIncreaseTimer = 30;
+            MainGame.Instance.OnLevelUp();
+        }
 
         for (int i = this._foodInArea.Count - 1; i >= 0; i--)
         {
@@ -171,7 +207,7 @@ public class PlantBehaviour : MonoBehaviour
                 continue;   
             } 
 
-            fia.timeInArea += (fia.food.lifeStatus == PossibleFood.FoodStatus.Veggies) ?  Time.deltaTime * (1-this._tasteForMeat) : Time.deltaTime;
+            fia.timeInArea += (fia.food.lifeStatus == PossibleFood.FoodStatus.Veggies) ?  MainGame.Instance.deltaTime * (1-this._tasteForMeat) : MainGame.Instance.deltaTime;
             if (this._currentBehaviour != PlantAttackMode.Idle) continue;
 
             if (fia.timeInArea > this._hungerGauge || fia.timeInArea > this._maxHungerArea)
@@ -188,37 +224,40 @@ public class PlantBehaviour : MonoBehaviour
 
         if (this._currentBehaviour == PlantAttackMode.Attacking)
         {
-            this._attackTime += Time.deltaTime;
+            this._attackTime += MainGame.Instance.deltaTime;
             this._mouth.transform.position = Vector3.Lerp(this._startingLocation, this._attackPoint, this._attackTime/this._attackSpeed);
             this._mouth.LookAt(this._attackPoint);
+            
+            Collider[] hitColliders = Physics.OverlapSphere(this._mouth.position, .25f);
+            if (hitColliders.Length > 0)
+            {
+                for (int n = 0; n < hitColliders.Length; n++)
+                {
+                    if (hitColliders[n].gameObject.layer == LayerMask.NameToLayer("Plant")) continue;
+                
+                PossibleFood pf = hitColliders[n].gameObject.GetComponentInParent<PossibleFood>();
+                if (pf == null) continue;
+
+                if (pf.lifeStatus == PossibleFood.FoodStatus.Veggies || pf.lifeStatus == PossibleFood.FoodStatus.Meat)
+                    OnEat(pf);
+
+
+        
+                }
+            }
+            
             if (this._attackTime > this._attackSpeed)
             {
                 this._attackTime = 0;
                 this._currentBehaviour = PlantAttackMode.Recoiling;
 
-                Collider[] hitColliders = Physics.OverlapSphere(this._mouth.position, .25f);
-                 if (hitColliders.Length > 0)
-                 {
-                     for (int n = 0; n < hitColliders.Length; n++)
-                     {
-                         if (hitColliders[n].gameObject.layer == LayerMask.NameToLayer("Plant")) continue;
-                        
-                        PossibleFood pf = hitColliders[n].gameObject.GetComponentInParent<PossibleFood>();
-                        if (pf == null) continue;
-
-                        if (pf.lifeStatus == PossibleFood.FoodStatus.Veggies || pf.lifeStatus == PossibleFood.FoodStatus.Meat)
-                            OnEat(pf);
-
-
-                
-                     }
-                 }
+               
             }
         }
 
         if (this._currentBehaviour == PlantAttackMode.Recoiling)
         {
-            this._attackTime += Time.deltaTime;
+            this._attackTime += MainGame.Instance.deltaTime;
             this._mouth.transform.position = Vector3.Lerp(this._attackPoint, this._startingLocation, this._attackTime/this._attackSpeed);
 
             if (this._attackTime > this._attackSpeed)

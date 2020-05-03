@@ -16,6 +16,11 @@ public class TitleScreen : MonoBehaviour
         #endif
     }   
 
+    public void OnReEnable()
+    {
+        MainGame.Instance.soundManager.OnAddAudioSource(GetComponent<AudioSource>());        
+    }
+
     public void OnGameStart()
     {
         this.gameObject.SetActive(false);

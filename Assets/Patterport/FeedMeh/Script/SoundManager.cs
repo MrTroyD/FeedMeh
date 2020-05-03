@@ -54,6 +54,7 @@ public class SoundManager : MonoBehaviour
             }
 
             this._audioSources[i].volume = newVolume;
+            // this._audioSources[i].SendMessage("Update");
         }
 
     }

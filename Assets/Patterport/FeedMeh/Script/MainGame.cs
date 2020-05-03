@@ -32,6 +32,8 @@ public class MainGame : MonoBehaviour
     int _score;
     float _scoreTimer;
     float _gameTime;
+
+    float _gameTimeScale = 1;
     [SerializeField]FoodSpawner _foodSpawner;
 
     int _level = 1;
@@ -92,6 +94,8 @@ public class MainGame : MonoBehaviour
 
         _instance = this;    
         this._gameUI.HideGameOver();
+
+        Invoke ("ShowTitle", .05f);
     }
 
     private void OnEnable() {
@@ -109,8 +113,8 @@ public class MainGame : MonoBehaviour
     void Update()
     {
         if (!this.gameActive || this.gamePaused) return;
-        this._scoreTimer += Time.deltaTime;
-        this._gameTime += Time.deltaTime;
+        this._scoreTimer += this.deltaTime;
+        this._gameTime += this.deltaTime;
 
         if(this._scoreTimer > 1)
         {
@@ -185,7 +189,6 @@ public class MainGame : MonoBehaviour
 
     public void GameOver()
     {
-        print ("Game Over");
         this._gameActive = false;
 
         this._gameUI.ShowGameOver();
@@ -195,16 +198,22 @@ public class MainGame : MonoBehaviour
 
     public void OnLevelUp()
     {
-        print ("Level Up!");
         this._level++;
         this._gameUI.OnUpdateUI();
+    }
+
+    public float deltaTime
+    {
+        get {return Time.deltaTime * this._gameTimeScale;}
     }
 
 
     void ShowTitle()
     {        
+        this._soundManager.ClearAudioSources();
         this._gameUI.HideGameOver();
         this._titleScreen.gameObject.SetActive(true);
+        this._titleScreen.OnReEnable();
     }
 
     public void OnOptions()
@@ -217,7 +226,7 @@ public class MainGame : MonoBehaviour
         if (this._gameActive)
         {
             print ("Pause Game");
-            Time.timeScale = 0;
+            this._gameTimeScale = 0f;
         }
         else
         {
@@ -232,7 +241,7 @@ public class MainGame : MonoBehaviour
         if (this._gameActive)
         {
             print ("Unpause Game");
-            Time.timeScale = 1;
+            this._gameTimeScale = 1;
         }
         
         this._optionsScreen.gameObject.SetActive(false);

@@ -32,7 +32,7 @@ public class GameUI : MonoBehaviour
 
         if (this._tipTimer > 0)
         {
-            this._tipTimer -= Time.deltaTime;
+            this._tipTimer -= MainGame.Instance.deltaTime;
 
             if (this._tipTimer <= 0)
             {
@@ -58,6 +58,7 @@ public class GameUI : MonoBehaviour
     {
         float level = MainGame.Instance.level;
         this._levelDisplay.text = level > 1 ? "x"+level : "";
+        this._animator.Play("UI_GotBonus");
 
     }
 
@@ -86,6 +87,7 @@ public class GameUI : MonoBehaviour
     public void HideGameOver()
     {
         this._gameOver.SetActive(false);
+        this._animator.Play("UI_EndGame");
     }
 
     public void ShowTip(string message, float duration)

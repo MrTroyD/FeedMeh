@@ -35,9 +35,19 @@ public class Character : MonoBehaviour
         set {this._vertical = value;}
     }
 
+    public float velocity
+    {
+        get { return this._velocity;}
+    }
+
     public float health
     {
         get {return this._health;}
+    }
+
+    public bool itemInHand
+    {
+        get {return this._itemInHand;}
     }
 
     // Start is called before the first frame update
@@ -175,7 +185,13 @@ public class Character : MonoBehaviour
 
     public void OnKillObject(Character character)
     {
+        if (character == this) //Character was offing himself
+        {
+            return;
+        }
+
         character._health -= this._attackDamage;
+
         
         print ("Attacking!");
         if (character._health == 0)
@@ -186,7 +202,6 @@ public class Character : MonoBehaviour
         }
         else if (character._health < 0)
         {
-            print ("More dead");
             character._health = 0;
         }
 
@@ -273,7 +288,7 @@ public class Character : MonoBehaviour
 
     void FixedUpdate() {
 
-        this.transform.position += this.transform.forward * this._velocity * this._maxSpeed * Time.deltaTime; 
+        this.transform.position += this.transform.forward * this._velocity * this._maxSpeed * MainGame.Instance.deltaTime; 
         if (this._velocity > .001f) 
         {
             this._velocity *= .94f;

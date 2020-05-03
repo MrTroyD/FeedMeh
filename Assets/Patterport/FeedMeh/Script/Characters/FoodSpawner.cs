@@ -63,7 +63,7 @@ public class FoodSpawner : MonoBehaviour
         //Every 5 seconds make sure there is food for the plant
         if (MainGame.Instance.gamePaused || !MainGame.Instance.gameActive) return;
 
-        this._spawnTimer += Time.deltaTime;
+        this._spawnTimer += MainGame.Instance.deltaTime;
         if (this._spawnTimer >= 5)
         {
             print ("Spawning new");

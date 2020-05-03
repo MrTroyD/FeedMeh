@@ -9,7 +9,8 @@ public class BaseAI : MonoBehaviour
         Idle,
         Ponder,
         Turning,
-        Walking
+        Walking,
+        Screaming
     }
 
     float _actionTimer;
@@ -17,6 +18,8 @@ public class BaseAI : MonoBehaviour
     float _ponderTimer = 1f;
     float _turningTimer = .25f;
     float _walkingTimer = 2f;
+
+    float _screaming = 2f;
     
 
     MyBehaviour _currentBehaviour = MyBehaviour.Idle;
@@ -37,12 +40,13 @@ public class BaseAI : MonoBehaviour
     void Update()
     {
         if (this._character.health < 1) return;
-        this._actionTimer -= Time.deltaTime;
+        this._actionTimer -= MainGame.Instance.deltaTime;
 
         CheckTimer();
 
         switch (this._currentBehaviour)
         {
+            case MyBehaviour.Screaming:
             case MyBehaviour.Turning:
                 this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, Quaternion.Euler(0, this._destinationAngle, 0), 15f);
                 break;
@@ -68,6 +72,9 @@ public class BaseAI : MonoBehaviour
             switch (this._currentBehaviour)
             {
                 case MyBehaviour.Idle:
+
+                    if (CheckPlantRange()) return;
+
                     this._currentBehaviour = MyBehaviour.Ponder;
                     this._actionTimer = this._ponderTimer;
                     
@@ -83,14 +90,45 @@ public class BaseAI : MonoBehaviour
 
                 case MyBehaviour.Turning:
                     this._currentBehaviour = MyBehaviour.Walking;
-                    this._actionTimer = this._walkingTimer;
+                    this._actionTimer = this._walkingTimer + Random.Range(0, 1.5f);
                     break;
 
                 case MyBehaviour.Walking:
                     this._currentBehaviour = MyBehaviour.Idle;
-                    this._actionTimer = this._idleTimerStarts + Random.Range(0, 1.5f);
+                    this._actionTimer = this._idleTimerStarts + Random.Range(0, 2.5f);
                     break;
+                
+                case MyBehaviour.Screaming:
+                    this._currentBehaviour = MyBehaviour.Walking;
+                    this._actionTimer = this._walkingTimer + Random.Range(0, 3.5f);
+                    break;                    
             }
         }
+    }
+
+    bool CheckPlantRange()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(this.transform.position, .85f);
+        if (hitColliders.Length > 0)
+        {
+            for (int n = 0; n < hitColliders.Length; n++)
+            {
+                if (hitColliders[n].gameObject.layer == LayerMask.NameToLayer("Plant"))
+                {
+                    // if (Random.Range(0, 1f) > .75f) return false;
+                    this._currentBehaviour = MyBehaviour.Screaming;
+                    Collider plant = hitColliders[n];
+                    print ("Screaming");
+
+                    this._destinationAngle = Mathf.Atan2(plant.transform.position.z - this.transform.position.z, plant.transform.position.x - this.transform.position.x) * Mathf.Rad2Deg;
+                
+                    this._character.GetComponentInChildren<Animator>().Play("Scream");
+                    this._actionTimer = this._screaming + Random.Range(1, 3.5f);
+                    return true;
+                }   
+            }
+        }
+
+        return false;
     }
 }

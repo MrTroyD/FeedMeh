@@ -31,7 +31,7 @@ public class SpeechBubble : MonoBehaviour
     {
         if(this._duration > 0)
         {
-            this._duration -= Time.deltaTime;
+            this._duration -= MainGame.Instance.deltaTime;
             if (this._duration < 0)
             {
                 Destroy(this.gameObject);
